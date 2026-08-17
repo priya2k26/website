@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill - Order Management System</title>
+    <link rel="stylesheet" href="styles.css?v=r6">
+</head>
+<body style="background: #ffffff;">
+    <div class="bill-page-wrapper">
+        <div class="bill-top-bar">
+            <button class="btn-back-outline" onclick="goBackToReadyOrders()">
+                ← Back
+            </button>
+            <h2 class="bill-page-title">🧾 Bill / Invoice</h2>
+            <div style="width: 80px;"></div> <!-- Spacer for flex balance -->
+        </div>
+
+        <div class="bill-card">
+            <div class="bill-card-header">
+                <div>
+                    <h1 class="invoice-title">INVOICE</h1>
+                    <p class="invoice-subtitle">Restaurant Order Management System</p>
+                </div>
+                <div class="receipt-icon-circle">
+                    🧾
+                </div>
+            </div>
+            
+            <div class="divider-line"></div>
+            
+            <div class="bill-meta-grid">
+                <div class="meta-item">
+                    <span class="meta-label">Table Number</span>
+                    <span class="meta-pill blue-pill" id="billTableNumber"></span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Order ID</span>
+                    <span class="meta-pill green-pill" id="billOrderId"></span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Date & Time</span>
+                    <span class="meta-pill yellow-pill" id="billDateTime"></span>
+                </div>
+            </div>
+            
+            <table class="new-bill-table">
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Category</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody id="billItemsList">
+                    <!-- Bill items will be populated here -->
+                </tbody>
+            </table>
+            
+            <div class="bill-summary-section">
+                <div class="summary-line">
+                    <span>Subtotal</span>
+                    <span id="billSubtotal">₹0.00</span>
+                </div>
+                <div class="summary-line">
+                    <span>Tax (5%)</span>
+                    <span id="billTax">₹0.00</span>
+                </div>
+                <div class="summary-line total-amount-line">
+                    <span>TOTAL AMOUNT</span>
+                    <span id="billTotal" class="total-price-green">₹0.00</span>
+                </div>
+            </div>
+            
+            <div class="payment-status-box" id="paymentStatusBox">
+                <span class="check-circle" id="paymentStatusIcon"></span>
+                <span>Payment Status: <strong class="paid-text" id="paymentStatusText">Pending</strong></span>
+            </div>
+            
+            <div class="thank-you-msg">
+                ❤️ Thank you for your order!
+            </div>
+            
+            <div class="bill-action-buttons">
+                <button class="btn-print" onclick="printBill()">🖨️ PRINT BILL</button>
+                <button class="btn-mark-paid" onclick="markAsPaid()">₹ MARK AS PAID</button>
+                <button class="btn-complete" onclick="completeOrder()">✓ COMPLETE ORDER</button>
+            </div>
+            <button class="btn-cancel-order" onclick="cancelOrder()">🗑️ CANCEL ORDER</button>
+        </div>
+    </div>
+
+    <script src="data.js?v=r6"></script>
+    <script src="script.js?v=r6"></script>
+</body>
+</html>

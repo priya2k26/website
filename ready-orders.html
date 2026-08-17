@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ready Orders - Order Management System</title>
+    <link rel="stylesheet" href="styles.css?v=r7">
+</head>
+<body style="background: #ffffff;">
+    <div class="ready-orders-page-wrapper">
+        <header class="ro-header-card">
+            <div class="ro-header-left">
+                <div class="ro-header-icon">
+                    📋<div class="ro-icon-check">✓</div>
+                </div>
+                <div class="ro-header-text">
+                    <h1>Ready Orders / Table Status</h1>
+                    <p>Track all tables with ready orders in real-time.</p>
+                </div>
+            </div>
+            <div class="ro-header-actions">
+                <button class="ro-btn-tracking" onclick="goBackToTracking()">
+                    ⌖ BACK TO TRACKING
+                </button>
+                <button class="ro-btn-logout" onclick="logout()">
+                    🚪 LOGOUT
+                </button>
+            </div>
+        </header>
+
+        <main class="ro-main-card">
+            <div class="ro-main-header">
+                <div class="ro-main-title">
+                    <span class="ro-table-icon">🍽️</span>
+                    <div>
+                        <h2>Table Status Overview</h2>
+                        <p>Check which tables have ready orders</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ro-list-container" id="readyTablesContainer">
+                <!-- Table rows will be populated here -->
+            </div>
+        </main>
+    </div>
+
+    <script src="data.js?v=r7"></script>
+    <script src="script.js?v=r7"></script>
+</body>
+</html>

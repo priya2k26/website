@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - Order Management System</title>
+    <link rel="stylesheet" href="styles.css?v=r5">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Order Confirmation</h1>
+            <div class="header-actions">
+                <button class="btn-back" onclick="goBackToFoodSelection()">← Back</button>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="confirmation-card">
+                <div class="confirmation-header">
+                    <h2>Order Summary</h2>
+                </div>
+
+                <div class="confirmation-details">
+                    <div class="detail-item">
+                        <label>Table Number:</label>
+                        <span id="confirmTableNumber" class="detail-value"></span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Order ID:</label>
+                        <span id="confirmOrderId" class="detail-value"></span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Status:</label>
+                        <span id="confirmOrderStatus" class="detail-value" style="font-weight: 600; color: #ff9800;">Pending</span>
+                    </div>
+                </div>
+
+                <div class="order-items">
+                    <h3>Selected Food Items</h3>
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="confirmItemsList">
+                            <!-- Items will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="confirmation-total">
+                    <p>Grand Total: <strong>₹<span id="confirmTotal">0</span></strong></p>
+                </div>
+
+                <div class="confirmation-actions">
+                    <button class="btn-secondary" onclick="goBackToFoodSelection()">Cancel</button>
+                    <button class="btn-primary" onclick="confirmOrder()">✓ Order Confirm</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="data.js?v=r5"></script>
+    <script src="script.js?v=r5"></script>
+</body>
+</html>
