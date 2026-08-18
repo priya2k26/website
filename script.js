@@ -166,10 +166,10 @@ function loadTableManagement() {
         let actionButtons = '';
         if (isOccupied) {
             actionButtons = `
-                <div class="ro-badge" style="background:#fff3e0; color:#e65100; cursor:pointer; margin-right:15px; border: 1px solid #ffe0b2;" onclick="clearTable(${table.id})">
+                <div class="ro-badge" style="background:#ff5722; color:white; cursor:pointer; margin-right:15px; border: 1px solid #ff5722;" onclick="clearTable(${table.id})">
                     🗑️ CLEAR TABLE
                 </div>
-                <div class="ro-action-btn" onclick="goToTrackingForTable('${table.id}')" title="View Order">
+                <div class="ro-action-btn" onclick="goToTrackingForTable('${table.id}')" title="View Order" style="background:#ff5722; color:white; border-color:#ff5722;">
                     >
                 </div>
             `;
@@ -178,7 +178,7 @@ function loadTableManagement() {
                 <div class="ro-badge badge-avail">
                     ✓ OPEN
                 </div>
-                <div class="ro-action-btn" style="background:#4caf50; color:white; border-color:#4caf50; width: 120px; border-radius: 8px;" onclick="selectTable(${table.id})" title="New Order">
+                <div class="ro-action-btn" style="background:#ff5722; color:white; border-color:#ff5722; width: 120px; border-radius: 8px;" onclick="selectTable(${table.id})" title="New Order">
                     + NEW ORDER
                 </div>
             `;
@@ -220,6 +220,15 @@ function clearTable(tableId) {
 function selectTable(tableId) {
     currentState.selectedTable = tableId;
     sessionStorage.setItem('selectedTable', tableId);
+    
+    // Clear previous order data when selecting a new table for a new order
+    currentState.selectedItems = [];
+    sessionStorage.removeItem('selectedItems');
+    currentState.currentOrderId = null;
+    sessionStorage.removeItem('currentOrderId');
+    currentState.currentOrder = null;
+    sessionStorage.removeItem('currentOrder');
+    
     window.location.href = 'food-selection.html'; // Direct navigation to guarantee it works
 }
 
@@ -805,12 +814,16 @@ function loadPreparationTracking() {
             ? '<span class="item-badge delivered">✓ Ready</span>'
             : '<span class="item-badge pending">Preparing...</span>';
             
+        // If the order item doesn't have an image, look it up from the master MENU_ITEMS
+        const menuItem = typeof MENU_ITEMS !== 'undefined' ? MENU_ITEMS.find(m => m.id === item.id) : null;
+        const imgSrc = item.image || (menuItem ? menuItem.image : '');
+            
         html += `
             <tr>
                 <td class="item-no"><div class="no-circle">${index + 1}</div></td>
                 <td>
                     <div class="dish-info">
-                        <img src="${item.image}" alt="${item.name}" class="dish-img">
+                        <img src="${imgSrc}" alt="${item.name}" class="dish-img" onerror="this.style.display='none'">
                         <div>
                             <div class="dish-name">${item.name}</div>
                             <div class="dish-price">₹${item.price.toFixed(2)}</div>
@@ -926,6 +939,8 @@ function goToTrackingForTable(tableId) {
         const order = currentState.orders.find(o => o.orderId === status.orderId);
         if (order) {
             currentState.currentOrder = order;
+            sessionStorage.setItem('currentOrder', JSON.stringify(order));
+            sessionStorage.setItem('currentOrderId', order.orderId);
             transitionToPage('preparation-tracking.html');
             return;
         }
@@ -941,6 +956,8 @@ function viewOrderBill(orderId) {
     const order = currentState.orders.find(o => o.orderId === orderId);
     if (order) {
         currentState.currentOrder = order;
+        sessionStorage.setItem('currentOrder', JSON.stringify(order));
+        sessionStorage.setItem('currentOrderId', order.orderId);
         transitionToPage('bill.html');
     }
 }
@@ -1006,18 +1023,18 @@ function loadBill() {
         statusText.textContent = 'Paid';
         statusText.className = 'paid-text';
         statusIcon.textContent = '✓';
-        statusBox.style.background = '#f1f8e9';
-        statusBox.style.borderColor = '#c5e1a5';
-        statusIcon.style.color = '#4caf50';
-        statusIcon.style.borderColor = '#4caf50';
+        statusBox.style.background = '#fff3e0';
+        statusBox.style.borderColor = '#ffe0b2';
+        statusIcon.style.color = '#e65100';
+        statusIcon.style.borderColor = '#e65100';
     } else {
         statusText.textContent = 'Pending';
         statusText.className = 'pending-text';
         statusIcon.textContent = '!';
-        statusBox.style.background = '#fff8e1';
-        statusBox.style.borderColor = '#ffe082';
-        statusIcon.style.color = '#ffb300';
-        statusIcon.style.borderColor = '#ffb300';
+        statusBox.style.background = '#fff3e0';
+        statusBox.style.borderColor = '#ffe0b2';
+        statusIcon.style.color = '#e65100';
+        statusIcon.style.borderColor = '#e65100';
     }
 }
 
@@ -1040,10 +1057,10 @@ function markAsPaid() {
     statusText.textContent = 'Paid';
     statusText.className = 'paid-text';
     statusIcon.textContent = '✓';
-    statusBox.style.background = '#f1f8e9';
-    statusBox.style.borderColor = '#c5e1a5';
-    statusIcon.style.color = '#4caf50';
-    statusIcon.style.borderColor = '#4caf50';
+    statusBox.style.background = '#fff3e0';
+    statusBox.style.borderColor = '#ffe0b2';
+    statusIcon.style.color = '#e65100';
+    statusIcon.style.borderColor = '#e65100';
     
     alert('Payment marked as received!');
 }
@@ -1063,6 +1080,8 @@ function cancelOrder() {
         
         sessionStorage.removeItem('currentOrderId');
         sessionStorage.removeItem('currentOrder');
+        sessionStorage.removeItem('selectedItems');
+        sessionStorage.removeItem('selectedTable');
         
         alert('Order cancelled successfully.');
         transitionToPage('tables.html');
@@ -1085,6 +1104,8 @@ function completeOrder() {
     if (currentState.currentOrderId === currentState.currentOrder.orderId) {
         sessionStorage.removeItem('currentOrderId');
         sessionStorage.removeItem('currentOrder');
+        sessionStorage.removeItem('selectedItems');
+        sessionStorage.removeItem('selectedTable');
     }
     
     // Update in localStorage
@@ -1109,7 +1130,13 @@ function goBackToReadyOrders() {
 // ==================== NAVIGATION HELPERS ====================
 function goBackToTables() {
     currentState.selectedTable = null;
+    sessionStorage.removeItem('selectedTable');
     currentState.selectedItems = [];
+    sessionStorage.removeItem('selectedItems');
+    currentState.currentOrderId = null;
+    sessionStorage.removeItem('currentOrderId');
+    currentState.currentOrder = null;
+    sessionStorage.removeItem('currentOrder');
     transitionToPage('tables.html');
 }
 

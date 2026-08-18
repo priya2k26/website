@@ -2423,3 +2423,107 @@ body.login-page-new {
     color: white !important;
 }
 
+
+/* UNIFIED BUTTON COLORS - USER REQUEST */
+button, .btn-glow, .ro-action-btn, .btn-primary, .btn-secondary, .btn-success, .btn-logout, .btn-back, .btn-add, .btn-remove, .btn-small, .btn-purple-gradient, .selected-item-quantity button {
+    background: #ff5722 !important;
+    color: white !important;
+    border-color: #ff5722 !important;
+}
+
+button:hover, .btn-glow:hover, .ro-action-btn:hover, .btn-primary:hover, .btn-secondary:hover, .btn-success:hover, .btn-logout:hover, .btn-back:hover, .btn-add:hover, .btn-remove:hover, .btn-small:hover, .btn-purple-gradient:hover, .selected-item-quantity button:hover {
+    background: #f4511e !important;
+    border-color: #f4511e !important;
+}
+
+/* For tabs to show active state */
+button.active, .btn-secondary.active, .btn-small.active, .category-tab.active, .time-tab.active {
+    background: #d84315 !important;
+    border-color: #d84315 !important;
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.2) !important;
+}
+
+/* UNIFIED BUTTON COLORS - USER REQUEST - PART 2 */
+.ro-btn-logout {
+    background: #ff5722 !important;
+    color: white !important;
+    border-color: #ff5722 !important;
+}
+
+.ro-btn-logout:hover {
+    background: #f4511e !important;
+    border-color: #f4511e !important;
+}
+
+/* UNIFIED ORANGE ORDER DETAILS BOX - USER REQUEST */
+.order-details-section {
+    background: rgba(255, 87, 34, 0.85) !important;
+}
+
+/* TRACKER STATUS LINE - USER REQUEST */
+.tracker-step.completed .step-circle {
+    background: #ff5722 !important;
+    box-shadow: 0 0 0 2px #ff5722, 0 0 15px rgba(255, 87, 34, 0.5) !important;
+}
+.tracker-step.completed + .step-connector {
+    background: #ff5722 !important;
+}
+.final-check {
+    background: #ff5722 !important;
+}
+
+/* GREEN AREA TO WHITE - USER REQUEST */
+.status-badge.delivered {
+    background: white !important;
+    color: #ff5722 !important;
+}
+.item-badge.delivered {
+    background: white !important;
+    color: #ff5722 !important;
+    border: 1px solid #ff5722 !important;
+}
+
+/* ALL ORANGE THEME - USER REQUEST */
+.pill-1, .pill-2, .pill-3, .pill-4, .pill-5 {
+    background: #fff3e0 !important;
+    color: #e65100 !important;
+    border-color: #ffe0b2 !important;
+}
+.row-color-1, .row-color-2, .row-color-3, .row-color-4, .row-color-5 {
+    border-left-color: #e65100 !important;
+}
+.text-avail-1, .text-avail-2, .text-avail-3, .text-avail-4, .text-avail-5, .text-avail, .text-occ {
+    color: #e65100 !important;
+}
+.dot-avail, .dot-occ {
+    background: #ff5722 !important;
+}
+.ro-icon-check {
+    background: #ff5722 !important;
+}
+.badge-avail {
+    background: #fff3e0 !important;
+    color: #e65100 !important;
+}
+.table-header.available, .table-header.occupied {
+    background: #ff5722 !important;
+}
+.ro-table-icon {
+    color: #ff5722 !important;
+}
+
+/* ALL ORANGE THEME FOR BILL PAGE - USER REQUEST */
+.bill-page-title, .invoice-title {
+    color: #ff5722 !important;
+}
+.blue-pill, .green-pill, .yellow-pill {
+    background: #fff3e0 !important;
+    color: #e65100 !important;
+}
+.new-bill-table th {
+    background: #ff5722 !important;
+    color: white !important;
+}
+.paid-text, .pending-text {
+    color: #e65100 !important;
+}
