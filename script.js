@@ -236,6 +236,8 @@ async function handleLogin(event) {
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userEmail', user.email);
         
+        await saveUserToFirebase(user);
+        
         transitionToPage('tables.html');
     } catch (error) {
         console.error('Login error:', error);
@@ -259,6 +261,8 @@ async function handleGoogleLogin() {
         currentState.userEmail = user.email;
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userEmail', user.email);
+        
+        await saveUserToFirebase(user);
         
         transitionToPage('tables.html');
     } catch (error) {
@@ -291,6 +295,32 @@ async function handleRegister(event) {
     } catch (error) {
         console.error('Registration error:', error);
         alert(error.message || 'Registration failed. Please try again.');
+    }
+}
+
+async function saveUserToFirebase(user) {
+    if (!window.firebaseDb || !window.dbSet || !window.dbRef) {
+        console.warn("Firebase Database is not ready.");
+        return;
+    }
+
+    const userData = {
+        uid: user.uid,
+        name: user.displayName || "",
+        email: user.email || "",
+        provider: user.providerData && user.providerData.length > 0 ? user.providerData[0].providerId : "Custom",
+        loginAt: new Date().toISOString()
+    };
+
+    try {
+        await window.dbSet(
+            window.dbRef(window.firebaseDb, `users/${user.uid}`),
+            userData
+        );
+
+        console.log("User saved to Realtime Database:", userData);
+    } catch (error) {
+        console.error("Error saving user to Realtime Database:", error);
     }
 }
 
