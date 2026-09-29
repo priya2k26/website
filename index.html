@@ -3,40 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Management System - Login</title>
-    <!-- We still load styles.css for global fonts but override background in style block -->
+    <title>Restaurant Order Management - Home & Login</title>
     <link rel="stylesheet" href="styles.css?v=r8">
     <style>
         body, html {
             margin: 0;
             padding: 0;
-            height: 100%;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #ffffff;
+            background: linear-gradient(rgba(245, 247, 250, 0.7), rgba(232, 236, 241, 0.7)), url('images/new_home_bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
 
-        .fairy-login-wrapper {
+        .main-container {
             width: 100%;
-            height: 100%;
+            max-width: 1400px;
+            padding: 2rem;
             display: flex;
-            justify-content: center;
+            flex-wrap: wrap;
             align-items: center;
-            background: transparent;
+            justify-content: center;
+            gap: 4rem;
+            flex-grow: 1;
         }
 
+        .hero-section {
+            flex: 1 1 500px;
+            text-align: left;
+        }
+
+        .login-section {
+            flex: 0 1 400px;
+            max-width: 100%;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #ff5722;
+            margin-bottom: 1.5rem;
+            letter-spacing: -1px;
+            animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .hero-title span {
+            color: #ff5722;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: #ff5722;
+            max-width: 600px;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 2.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #fff;
+            background: #ff5722;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px -5px rgba(255, 87, 34, 0.4);
+            animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s both;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px -5px rgba(255, 87, 34, 0.5);
+            background: #f4511e;
+        }
+
+        /* Features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            margin-top: 3rem;
+            animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both;
+        }
+
+        .feature-card {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            text-align: left;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ff5722;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-desc {
+            color: #ff5722;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        /* Login Box Styles */
         .fairy-login-box {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 20px;
-            padding: 50px 40px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
+            padding: 40px 30px;
+            width: 100%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1), inset 0 0 20px rgba(255,255,255,0.2);
             text-align: center;
             animation: fadeIn 1s ease-out;
         }
@@ -46,21 +146,22 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .fairy-login-box h1 {
+        .fairy-login-box h2 {
             color: #333;
             margin-bottom: 10px;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
+            margin-top: 0;
         }
 
-        .fairy-login-box p {
+        .fairy-login-box p.login-sub {
             color: #666;
-            margin-bottom: 30px;
-            font-size: 16px;
+            margin-bottom: 25px;
+            font-size: 15px;
         }
 
         .input-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             text-align: left;
         }
 
@@ -77,9 +178,9 @@
             background: #fff;
             border: 1px solid #ddd;
             border-radius: 10px;
-            padding: 15px;
+            padding: 12px 15px;
             color: #333;
-            font-size: 16px;
+            font-size: 15px;
             box-sizing: border-box;
             transition: all 0.3s ease;
         }
@@ -102,12 +203,12 @@
             border-radius: 10px;
             padding: 15px;
             color: #fff;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(255, 87, 34, 0.25);
             transition: all 0.3s ease;
-            margin-top: 10px;
+            margin-top: 5px;
         }
 
         .btn-glow:hover {
@@ -117,40 +218,138 @@
         }
 
         .demo-credentials {
-            margin-top: 25px;
-            font-size: 13px;
+            margin-top: 20px;
+            font-size: 12px;
             color: #888;
+        }
+
+        .auth-links {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .auth-links a {
+            color: #ff5722;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .main-container {
+                flex-direction: column;
+                text-align: center;
+                gap: 2rem;
+            }
+            .hero-section {
+                text-align: center;
+            }
+            .hero-title {
+                font-size: 3rem;
+            }
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .login-section {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="fairy-login-wrapper">
-        <div class="fairy-login-box">
-            <h1>Welcome</h1>
-            <p>Sign in to continue your journey</p>
+    <div class="main-container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <img src="images/logo.jpg" alt="OrderFlow Logo" style="height: 100px; margin-bottom: 1.5rem; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);">
+            <h1 class="hero-title">Elevate Your <span>Restaurant</span></h1>
+            <p class="hero-subtitle">
+                Seamlessly manage orders, track table availability, and optimize your restaurant's workflow with our intuitive Order Management System.
+            </p>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                <a href="food-selection.html" class="cta-button" style="background: #333; box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.4);">
+                    Order Now as Guest
+                </a>
+            </div>
             
-            <form id="loginForm">
-                <div class="input-group">
-                    <label>Email Address</label>
-                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3 class="feature-title">Lightning Fast</h3>
+                    <p class="feature-desc">Quickly process orders and send them straight to the kitchen. Minimize wait times.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Smart Dashboard</h3>
+                    <p class="feature-desc">Get real-time insights into your restaurant's performance and table availability.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">Responsive</h3>
+                    <p class="feature-desc">Access your management system from any device. Flawless experience everywhere.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Section -->
+        <div class="login-section">
+            <div class="fairy-login-box">
+                <h2>Welcome Back</h2>
+                <p class="login-sub">Sign in to manage your restaurant</p>
+                
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter your email">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="password" name="password" required placeholder="Enter your password">
+                    </div>
+                    
+                    <button type="submit" class="btn-glow">LOGIN</button>
+                </form>
+                
+                <div style="margin: 20px 0; color: #888; display: flex; align-items: center; justify-content: center;">
+                    <hr style="flex: 1; border: none; border-top: 1px solid #ddd;">
+                    <span style="padding: 0 10px; font-size: 14px;">OR</span>
+                    <hr style="flex: 1; border: none; border-top: 1px solid #ddd;">
+                </div>
+
+                <button type="button" id="googleLoginBtn" class="btn-glow" style="background: #fff; color: #333; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" onclick="handleGoogleLogin()">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width: 20px; height: 20px;">
+                    Sign in with Google
+                </button>
+                
+                <div class="demo-credentials">
+                    Demo: admin@restaurant.com | 123456
                 </div>
                 
-                <div class="input-group">
-                    <label>Password</label>
-                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                <div class="auth-links">
+                    Don't have an account? <a href="register.html">Register here</a>
                 </div>
-                
-                <button type="submit" class="btn-glow">LOGIN</button>
-            </form>
-            
-            <div class="demo-credentials">
-                Demo: Email: admin@restaurant.com | Password: 123456
             </div>
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script type="module" src="firebase-config.js?v=r8"></script>
     <script src="data.js?v=r8"></script>
     <script src="script.js?v=r8"></script>
 </body>
 </html>
-            

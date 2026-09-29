@@ -3,46 +3,431 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Table Management - Order Management System</title>
+    <title>Table Management - Foodie Haven</title>
     <link rel="stylesheet" href="styles.css?v=r8">
-</head>
-<body style="background: #ffffff;">
-    <div class="ready-orders-page-wrapper">
-        <header class="ro-header-card">
-            <div class="ro-header-left">
-                <div class="ro-header-icon">
-                    🪑<div class="ro-icon-check">✓</div>
-                </div>
-                <div class="ro-header-text">
-                    <h1>Table Management</h1>
-                    <p>Select an available table to start an order.</p>
-                </div>
-            </div>
-            <div class="ro-header-actions">
-                <span id="userDisplay" style="font-weight: 600; color: #555;">User</span>
-                <button class="ro-btn-logout" onclick="logout()" style="margin-left:15px;">
-                    🚪 LOGOUT
-                </button>
-            </div>
-        </header>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-        <main class="ro-main-card">
-            <div class="ro-main-header">
-                <div class="ro-main-title">
-                    <span class="ro-table-icon" style="animation: none; color: #ff5722;">🍽️</span>
-                    <div>
-                        <h2>Table Selection Overview</h2>
-                        <p>Check availability and manage active tables</p>
+        /* Top Navigation */
+        .top-nav {
+            background-color: #f97316;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+        }
+
+        .logo-text h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            margin: 0;
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .top-links {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .top-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .top-links a.active {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: white;
+            color: #f97316;
+            padding: 5px;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Layout */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 220px;
+            background: #fdfdfd;
+            border-right: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 15px;
+            justify-content: space-between;
+        }
+
+        .side-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .side-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .side-nav a:hover {
+            background: #f1f5f9;
+            color: #334155;
+        }
+
+        .side-nav a.active {
+            background: #fff3e0;
+            color: #f97316;
+        }
+
+        .total-tables-box {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .total-tables-box .icon {
+            color: #f97316;
+            font-size: 20px;
+        }
+        
+        .total-tables-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .total-tables-text span {
+            font-size: 11px;
+            color: #f97316;
+            font-weight: 600;
+        }
+        
+        .total-tables-text strong {
+            font-size: 16px;
+            color: #333;
+        }
+
+        /* Main Content */
+        .content-area {
+            flex: 1;
+            padding: 30px 40px;
+            overflow-y: auto;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-icon {
+            background: #fff3e0;
+            color: #f97316;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .header-text h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .header-text p {
+            margin: 5px 0 0 0;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .search-bar {
+            position: relative;
+        }
+        
+        .search-bar input {
+            padding: 10px 15px 10px 35px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 250px;
+            outline: none;
+        }
+        
+        .search-bar::before {
+            content: '🔍';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            opacity: 0.5;
+        }
+
+        /* Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        /* Table Card Styles */
+        .table-card {
+            background: #f0fdf4; /* Default to available */
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        
+        .table-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .table-card.occupied {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .card-top {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .image-circle {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            padding: 5px;
+        }
+
+        .image-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .info .capacity {
+            margin: 0;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .info .status-indicator {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #22c55e;
+        }
+
+        .table-card.occupied .status-indicator {
+            color: #ef4444;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .table-card.occupied .dot {
+            background: #ef4444;
+        }
+
+        .card-action button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-available {
+            background: #f97316;
+            color: white;
+            border: 1px solid #f97316;
+            box-shadow: 0 4px 10px rgba(249, 115, 22, 0.3);
+        }
+
+        .btn-available:hover {
+            background: #ea580c;
+        }
+
+        .btn-occupied {
+            background: #f97316;
+            color: white;
+            border: 1px solid #f97316;
+            box-shadow: 0 4px 10px rgba(249, 115, 22, 0.3);
+        }
+
+        .btn-occupied:hover {
+            background: #ea580c;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <div class="logo-area">
+            <div class="logo-icon">🍴</div>
+            <div class="logo-text">
+                <h1>Foodie Haven</h1>
+                <p>Good Food • Happy People</p>
+            </div>
+        </div>
+        <div class="top-links">
+            <a href="dashboard.html">🏠 Dashboard</a>
+            <a href="tables.html" class="active">🪑 Tables</a>
+            <a href="#">📋 Orders</a>
+            <a href="#">📄 Menu</a>
+            <div class="user-profile">👤</div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <aside class="sidebar">
+            <div class="side-nav">
+                <a href="dashboard.html"><span>🏠</span> Dashboard</a>
+                <a href="tables.html" class="active"><span>🪑</span> Tables</a>
+                <a href="#"><span>📋</span> Orders</a>
+                <a href="#"><span>📄</span> Menu</a>
+            </div>
+            
+            <div class="total-tables-box">
+                <div class="icon">🍴</div>
+                <div class="total-tables-text">
+                    <span>Total Tables</span>
+                    <strong>15</strong>
+                </div>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <div class="content-header">
+                <div class="header-title">
+                    <div class="header-icon">🪑</div>
+                    <div class="header-text">
+                        <h2>Table Management</h2>
+                        <p>Check which tables have ready orders</p>
                     </div>
                 </div>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search table number...">
+                </div>
             </div>
 
-            <div class="ro-list-container" id="tablesContainer">
-                <!-- Tables will be generated by JavaScript -->
+            <div class="grid-container" id="tablesContainer">
+                <!-- JavaScript will populate the tables here -->
             </div>
         </main>
     </div>
 
+    <script type="module" src="firebase-config.js?v=r8"></script>
     <script src="data.js?v=r8"></script>
     <script src="script.js?v=r8"></script>
 </body>

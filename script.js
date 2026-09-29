@@ -20,12 +20,107 @@ function initializeTableStatuses() {
         }
     });
     if (changed) {
+        syncTableStatusesToFirebase();
+    }
+}
+
+// ==================== FIREBASE SYNC ====================
+function syncOrdersToFirebase() {
+    if (window.firebaseDb && window.dbSet && window.dbRef) {
+        window.dbSet(window.dbRef(window.firebaseDb, 'orders'), currentState.orders);
+    } else {
+        localStorage.setItem('orders', JSON.stringify(currentState.orders));
+    }
+}
+
+function syncTableStatusesToFirebase() {
+    if (window.firebaseDb && window.dbSet && window.dbRef) {
+        window.dbSet(window.dbRef(window.firebaseDb, 'tableStatuses'), currentState.tableStatuses);
+    } else {
         localStorage.setItem('tableStatuses', JSON.stringify(currentState.tableStatuses));
     }
 }
 
+// ==================== INITIALIZE DATA ====================
+async function initializeData() {
+    if (!window.firebaseDb) {
+        setTimeout(initializeData, 500); // Wait for Firebase to load
+        return;
+    }
+    
+    // Listen to orders
+    window.dbOnValue(window.dbRef(window.firebaseDb, 'orders'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            // Firebase converts sparse arrays to objects, so we ensure it stays an array
+            if (Array.isArray(data)) {
+                currentState.orders = data.filter(Boolean);
+            } else {
+                currentState.orders = Object.values(data).filter(Boolean);
+            }
+        } else if (currentState.orders.length > 0) {
+            // Seed firebase if it's empty but we have local orders
+            syncOrdersToFirebase();
+        } else {
+            currentState.orders = [];
+        }
+        
+        // Refresh UI if on relevant pages
+        if (document.getElementById('readyOrdersList')) loadReadyOrders();
+        if (document.getElementById('preparationList')) loadPreparationOrders();
+    });
+
+    // Listen to table statuses
+    window.dbOnValue(window.dbRef(window.firebaseDb, 'tableStatuses'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            currentState.tableStatuses = data;
+            
+            let missing = false;
+            TABLES.forEach(table => {
+                if (!currentState.tableStatuses[table.id]) {
+                    currentState.tableStatuses[table.id] = { status: 'available', orderId: null };
+                    missing = true;
+                }
+            });
+            
+            if (missing) syncTableStatusesToFirebase();
+        } else {
+            // Seed firebase with initialized tables
+            initializeTableStatuses();
+        }
+        
+        // Refresh UI if on relevant pages
+        if (document.getElementById('tablesContainer')) loadTableManagement();
+    });
+}
+
+// ==================== TOAST NOTIFICATIONS ====================
+function showNotification(message, icon = '🔔') {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 400); // Wait for animation
+    }, 4000);
+}
+
 // ==================== LOGIN PAGE ====================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    if (currentState.isLoggedIn) {
+        await initializeData();
+    }
     initializeTableStatuses();
     
     // Check if on login page
@@ -33,14 +128,19 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('loginForm').addEventListener('submit', handleLogin);
     }
     
+    // Check if on register page
+    if (document.getElementById('registerForm')) {
+        document.getElementById('registerForm').addEventListener('submit', handleRegister);
+    }
+    
     // Check if user is logged in for other pages
     if (document.title.includes('Login') === false && 
+        document.title.includes('Home') === false &&
         !currentState.isLoggedIn && 
-        window.location.pathname !== '/website/index.html') {
-        // Don't redirect if on login page
-        if (!window.location.pathname.includes('index.html')) {
-            // User is not logged in, let them access pages (they'll handle redirect)
-        }
+        !window.location.pathname.includes('index.html') &&
+        !window.location.pathname.includes('login.html')) {
+        // They are not logged in and not on login or home, they should probably be redirected to login
+        // But for now just keeping original logic
     }
     
     // Initialize table management page
@@ -98,6 +198,11 @@ document.addEventListener('DOMContentLoaded', function() {
         loadBill();
     }
     
+    // Initialize dashboard page
+    if (document.getElementById('dashboardContainer')) {
+        loadDashboard();
+    }
+    
     // Resume simulation for active orders
     currentState.orders.forEach(order => {
         if (!order.completed && order.orderStatus && order.orderStatus !== 'delivered') {
@@ -109,27 +214,87 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ==================== AUTHENTICATION ====================
-function handleLogin(event) {
+async function handleLogin(event) {
     event.preventDefault();
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     
-    // Validate credentials
-    if (email === VALID_CREDENTIALS.email && password === VALID_CREDENTIALS.password) {
-        currentState.isLoggedIn = true;
-        currentState.userEmail = email;
-        sessionStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.setItem('userEmail', email);
+    try {
+        if (!window.firebaseSignIn || !window.firebaseAuth) {
+            alert("Firebase is still initializing. Please wait a moment and try again.");
+            return;
+        }
         
-        // Redirect to tables page
+        const userCredential = await window.firebaseSignIn(window.firebaseAuth, email, password);
+        const user = userCredential.user;
+        const token = await user.getIdToken();
+        
+        sessionStorage.setItem('token', token);
+        currentState.isLoggedIn = true;
+        currentState.userEmail = user.email;
+        sessionStorage.setItem('isLoggedIn', 'true');
+        sessionStorage.setItem('userEmail', user.email);
+        
         transitionToPage('tables.html');
-    } else {
-        alert('Invalid email or password. Please try again.\nDemo: admin@restaurant.com / 123456');
+    } catch (error) {
+        console.error('Login error:', error);
+        alert(error.message || 'Invalid email or password. Please try again.');
     }
 }
 
-function logout() {
+async function handleGoogleLogin() {
+    try {
+        if (!window.firebaseSignInWithPopup || !window.firebaseAuth || !window.firebaseGoogleProvider) {
+            alert("Firebase is still initializing. Please wait a moment and try again.");
+            return;
+        }
+        
+        const result = await window.firebaseSignInWithPopup(window.firebaseAuth, window.firebaseGoogleProvider);
+        const user = result.user;
+        const token = await user.getIdToken();
+        
+        sessionStorage.setItem('token', token);
+        currentState.isLoggedIn = true;
+        currentState.userEmail = user.email;
+        sessionStorage.setItem('isLoggedIn', 'true');
+        sessionStorage.setItem('userEmail', user.email);
+        
+        transitionToPage('tables.html');
+    } catch (error) {
+        console.error('Google Login error:', error);
+        alert(error.message || 'Google login failed. Please try again.');
+    }
+}
+
+async function handleRegister(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+    const confirmPassword = document.getElementById('regConfirmPassword').value;
+    
+    if (password !== confirmPassword) {
+        alert('Passwords do not match. Please try again.');
+        return;
+    }
+    
+    try {
+        if (!window.firebaseSignUp || !window.firebaseAuth) {
+            alert("Firebase is still initializing. Please wait a moment and try again.");
+            return;
+        }
+        
+        await window.firebaseSignUp(window.firebaseAuth, email, password);
+        alert('Registration successful! Please login.');
+        transitionToPage('login.html');
+    } catch (error) {
+        console.error('Registration error:', error);
+        alert(error.message || 'Registration failed. Please try again.');
+    }
+}
+
+async function logout() {
     currentState.isLoggedIn = false;
     currentState.userEmail = '';
     currentState.selectedTable = null;
@@ -138,7 +303,15 @@ function logout() {
     
     sessionStorage.clear();
     
-    transitionToPage('index.html');
+    if (window.firebaseSignOut && window.firebaseAuth) {
+        try {
+            await window.firebaseSignOut(window.firebaseAuth);
+        } catch(e) {
+            console.error('Firebase signout error:', e);
+        }
+    }
+    
+    transitionToPage('login.html');
 }
 
 function updateUserDisplay() {
@@ -156,63 +329,59 @@ function loadTableManagement() {
     
     TABLES.forEach((table, index) => {
         const status = currentState.tableStatuses[table.id] || { status: 'available' };
-        const colorIndex = (index % 5) + 1; // 1 to 5
         const isOccupied = status.status === 'occupied';
         
         const row = document.createElement('div');
-        row.className = `ro-table-row row-color-${colorIndex}`;
-        row.style.animationDelay = `${index * 0.1}s`;
+        row.className = `table-card ${isOccupied ? 'occupied' : ''}`;
         
-        let actionButtons = '';
-        if (isOccupied) {
-            actionButtons = `
-                <div class="ro-badge" style="background:#ff5722; color:white; cursor:pointer; margin-right:15px; border: 1px solid #ff5722;" onclick="clearTable(${table.id})">
-                    🗑️ CLEAR TABLE
-                </div>
-                <div class="ro-action-btn" onclick="goToTrackingForTable('${table.id}')" title="View Order" style="background:#ff5722; color:white; border-color:#ff5722;">
-                    >
-                </div>
-            `;
-        } else {
-            actionButtons = `
-                <div class="ro-badge badge-avail">
-                    ✓ OPEN
-                </div>
-                <div class="ro-action-btn" style="background:#ff5722; color:white; border-color:#ff5722; width: 120px; border-radius: 8px;" onclick="selectTable(${table.id})" title="New Order">
-                    + NEW ORDER
-                </div>
-            `;
-        }
-
         row.innerHTML = `
-            <div class="ro-table-pill pill-${colorIndex}">
-                <div class="ro-pill-title">TABLE</div>
-                <div class="ro-pill-number">${table.number}</div>
-                <div class="ro-pill-icon">🪑</div>
-            </div>
-            <div class="ro-table-info">
-                <div class="ro-status-line">
-                    <div class="ro-dot ${isOccupied ? 'dot-occ' : 'dot-avail'}"></div>
-                    <span class="${isOccupied ? 'text-occ' : `text-avail-${colorIndex}`}">${status.status.toUpperCase()}</span>
+            <div class="card-top">
+                <div class="image-circle">
+                    <img src="images/special_table_bg.png" alt="Table">
                 </div>
-                <div class="ro-order-details">
-                    ${isOccupied ? `📄 Order ID: ${status.orderId}` : 'Ready for guests'}
+                <div class="info">
+                    <h3>Table ${table.id}</h3>
+                    <p class="capacity">👥 ${table.capacity || 4} (Capacity)</p>
+                    <p class="status-indicator">
+                        <span class="dot"></span> ${isOccupied ? 'Occupied' : 'Available'}
+                    </p>
                 </div>
             </div>
-            
-            ${actionButtons}
+            <div class="card-action">
+                ${isOccupied 
+                    ? `<button class="btn-occupied" onclick="goToTrackingForTable('${table.id}')">👁 View Order</button>`
+                    : `<button class="btn-available" onclick="selectTable(${table.id})">&gt; View / Take Order</button>`
+                }
+            </div>
         `;
         
         container.appendChild(row);
     });
 }
 
-function clearTable(tableId) {
+async function clearTable(tableId) {
     if (confirm('Are you sure you want to clear this table?')) {
-        if (currentState.tableStatuses[tableId]) {
-            currentState.tableStatuses[tableId] = { status: 'available', orderId: null };
-            localStorage.setItem('tableStatuses', JSON.stringify(currentState.tableStatuses));
-            loadTableManagement();
+        try {
+            try {
+                await fetch(`${API_URL}/tables/${tableId}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ status: 'Available', current_order_id: null })
+                });
+            } catch (backendError) {
+                console.warn('Backend server not reachable. Continuing with local state.', backendError);
+            }
+            
+            if (currentState.tableStatuses[tableId]) {
+                currentState.tableStatuses[tableId] = { status: 'available', orderId: null };
+                syncTableStatusesToFirebase();
+                loadTableManagement();
+            }
+        } catch(e) {
+            console.error('Error clearing table:', e);
         }
     }
 }
@@ -258,7 +427,7 @@ function loadFoodSelection() {
     updateSelectedItemsPanel();
     // Default initialization
     if (typeof activeCategory === 'undefined') {
-        window.activeCategory = 'Main Dish';
+        window.activeCategory = 'Main Dishes';
         window.activeTime = 'Morning';
     }
     renderMenuItems();
@@ -309,7 +478,7 @@ function renderMenuItems() {
     if (!menuContainer) return;
     menuContainer.innerHTML = '';
     
-    let cat = window.activeCategory || 'Main Dish';
+    let cat = window.activeCategory || 'Main Dishes';
     let time = window.activeTime || 'Morning';
     
     // If Sweets or Ice Cream, ignore time filter
@@ -491,7 +660,7 @@ function loadOrderConfirmation() {
     document.getElementById('confirmTotal').textContent = totalPrice;
 }
 
-function confirmOrder() {
+async function confirmOrder() {
     if (!currentState.currentOrderId) {
         currentState.currentOrderId = generateOrderId();
     }
@@ -502,9 +671,10 @@ function confirmOrder() {
         tableNumber: currentState.selectedTable,
         items: JSON.parse(JSON.stringify(currentState.selectedItems)),
         status: 'confirmed',
-        orderStatus: 'start_cooking',
+        orderStatus: 'pending',
         timeTracking: {
-            'start_cooking': new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            'pending': new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            'start_cooking': null,
             'end_cooking': null,
             'on_the_way': null,
             'delivered': null
@@ -524,26 +694,54 @@ function confirmOrder() {
         };
     });
     
-    // Save order
-    currentState.orders.push(currentState.currentOrder);
-    localStorage.setItem('orders', JSON.stringify(currentState.orders));
-    
-    // Update table status
-    currentState.tableStatuses[currentState.selectedTable] = {
-        status: 'occupied',
-        orderId: currentState.currentOrderId
-    };
-    localStorage.setItem('tableStatuses', JSON.stringify(currentState.tableStatuses));
-    
-    // Set current order in session for the tracking pages
-    sessionStorage.setItem('currentOrderId', currentState.currentOrderId);
-    sessionStorage.setItem('currentOrder', JSON.stringify(currentState.currentOrder));
-    
-    // Start simulation
-    simulateOrderPreparation(currentState.currentOrderId);
-    
-    // Navigate to tracking
-    transitionToPage('preparation-tracking.html');
+    try {
+        try {
+            await fetch(`${API_URL}/orders`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    id: currentState.currentOrderId,
+                    tableNumber: currentState.selectedTable,
+                    totalAmount: currentState.currentOrder.totalPrice,
+                    items: currentState.currentOrder.items
+                })
+            });
+        } catch (backendError) {
+            console.warn('Backend server not reachable. Continuing with local state and Firebase.', backendError);
+        }
+        
+        // Save order locally for other pages that depend on local state
+        currentState.orders.push(currentState.currentOrder);
+        syncOrdersToFirebase();
+        
+        // Update table status locally
+        currentState.tableStatuses[currentState.selectedTable] = {
+            status: 'occupied',
+            orderId: currentState.currentOrderId
+        };
+        syncTableStatusesToFirebase();
+        
+        // Set current order in session for the tracking pages
+        sessionStorage.setItem('currentOrderId', currentState.currentOrderId);
+        sessionStorage.setItem('currentOrder', JSON.stringify(currentState.currentOrder));
+        
+        // Start simulation
+        simulateOrderPreparation(currentState.currentOrderId);
+        
+        showNotification(`New order received - Table ${currentState.selectedTable}`, '🛎️');
+        setTimeout(() => {
+            showNotification(`Order ${currentState.currentOrderId} is pending`, '⏳');
+        }, 1500);
+        
+        // Navigate to tracking
+        transitionToPage('preparation-tracking.html');
+    } catch(e) {
+        console.error('Error confirming order:', e);
+        alert('Could not place order on server');
+    }
 }
 
 function goBackToConfirmation() {
@@ -562,8 +760,8 @@ function loadFoodCategories() {
     // Display category counts
     const counts = getCategoryCounts(currentState.currentOrder.items);
     
-    const mainDishCount = counts['Main Dish'] || 0;
-    const sideDishCount = counts['Side Dish'] || 0;
+    const mainDishCount = counts['Main Dishes'] || 0;
+    const sideDishCount = counts['Side Dishes'] || 0;
     const drinksCount = counts['Drinks'] || 0;
     
     document.getElementById('mainDishCount').innerHTML = `${mainDishCount} items`;
@@ -608,11 +806,11 @@ function goToDrinks() {
 
 // ==================== CATEGORY PAGES ====================
 function loadMainDishes() {
-    loadCategoryPage('Main Dish', 'mainDishesContainer');
+    loadCategoryPage('Main Dishes', 'mainDishesContainer');
 }
 
 function loadSideDishes() {
-    loadCategoryPage('Side Dish', 'sideDishesContainer');
+    loadCategoryPage('Side Dishes', 'sideDishesContainer');
 }
 
 function loadDrinks() {
@@ -693,7 +891,7 @@ function simulatePreparation(itemId) {
 }
 
 function simulateOrderPreparation(orderId) {
-    const states = ['start_cooking', 'end_cooking', 'on_the_way', 'delivered'];
+    const states = ['pending', 'start_cooking', 'end_cooking', 'on_the_way', 'delivered'];
     let currentIndex = 0;
     
     const interval = setInterval(() => {
@@ -725,8 +923,21 @@ function simulateOrderPreparation(orderId) {
                 });
             }
             
-            localStorage.setItem('orders', JSON.stringify(currentState.orders));
+            syncOrdersToFirebase();
             
+            // Fire Notifications
+            if (order.orderStatus === 'pending') {
+                showNotification(`Order ${order.orderId} is pending`, '⏳');
+            } else if (order.orderStatus === 'start_cooking') {
+                showNotification(`Order ${order.orderId} is now cooking`, '👨‍🍳');
+            } else if (order.orderStatus === 'end_cooking') {
+                showNotification(`Order ${order.orderId} cooking completed`, '✅');
+            } else if (order.orderStatus === 'on_the_way') {
+                showNotification(`Order ${order.orderId} is ready for server pickup`, '🚶‍♂️');
+            } else if (order.orderStatus === 'delivered') {
+                showNotification(`Order ${order.orderId} has been served to Table ${order.tableNumber}`, '🍽️');
+            }
+
             if (document.getElementById('trackingItemsContainer') && currentState.currentOrderId === orderId) {
                 currentState.currentOrder = order;
                 sessionStorage.setItem('currentOrder', JSON.stringify(order));
@@ -761,10 +972,10 @@ function loadPreparationTracking() {
     container.innerHTML = '';
     
     const order = currentState.currentOrder;
-    const status = order.orderStatus || 'start_cooking';
-    const states = ['start_cooking', 'end_cooking', 'on_the_way', 'delivered'];
-    const labels = ['Start Cooking', 'End Cooking', 'On the Way to Table', 'Delivered to Table'];
-    const icons = ['👨‍🍳', '🍲', '🚶‍♂️', '🍽️'];
+    const status = order.orderStatus || 'pending';
+    const states = ['pending', 'start_cooking', 'end_cooking', 'on_the_way', 'delivered'];
+    const labels = ['Pending', 'Start Cooking', 'End Cooking', 'On the Way to Table', 'Delivered to Table'];
+    const icons = ['⏳', '👨‍🍳', '🍲', '🚶‍♂️', '🍽️'];
     const currentIndex = states.indexOf(status);
     
     let html = '<div class="single-line-tracker">';
@@ -900,7 +1111,7 @@ function loadReadyOrders() {
         row.innerHTML = `
             <div class="ro-table-pill pill-${colorIndex}">
                 <div class="ro-pill-title">TABLE</div>
-                <div class="ro-pill-number">${table.number}</div>
+                <div class="ro-pill-number">${table.id}</div>
                 <div class="ro-pill-icon">🪑</div>
             </div>
             <div class="ro-table-info">
@@ -1047,7 +1258,7 @@ function markAsPaid() {
     const index = currentState.orders.findIndex(o => o.orderId === currentState.currentOrder.orderId);
     if (index !== -1) {
         currentState.orders[index] = currentState.currentOrder;
-        localStorage.setItem('orders', JSON.stringify(currentState.orders));
+        syncOrdersToFirebase();
     }
     
     const statusText = document.getElementById('paymentStatusText');
@@ -1072,11 +1283,11 @@ function cancelOrder() {
         const tableId = currentState.currentOrder.tableNumber;
         if (currentState.tableStatuses[tableId]) {
             currentState.tableStatuses[tableId] = { status: 'available', orderId: null };
-            localStorage.setItem('tableStatuses', JSON.stringify(currentState.tableStatuses));
+            syncTableStatusesToFirebase();
         }
         
         currentState.orders = currentState.orders.filter(o => o.orderId !== currentState.currentOrder.orderId);
-        localStorage.setItem('orders', JSON.stringify(currentState.orders));
+        syncOrdersToFirebase();
         
         sessionStorage.removeItem('currentOrderId');
         sessionStorage.removeItem('currentOrder');
@@ -1091,6 +1302,11 @@ function cancelOrder() {
 function completeOrder() {
     if (!currentState.currentOrder) return;
     
+    if (!currentState.currentOrder.paid) {
+        alert('Please receive payment before completing the order.');
+        return;
+    }
+    
     currentState.currentOrder.completed = true;
     
     // Update table status
@@ -1098,7 +1314,7 @@ function completeOrder() {
     if (currentState.tableStatuses[tableId]) {
         currentState.tableStatuses[tableId] = { status: 'available', orderId: null };
     }
-    localStorage.setItem('tableStatuses', JSON.stringify(currentState.tableStatuses));
+    syncTableStatusesToFirebase();
     
     // Clear session current order if it matches
     if (currentState.currentOrderId === currentState.currentOrder.orderId) {
@@ -1112,7 +1328,7 @@ function completeOrder() {
     const index = currentState.orders.findIndex(o => o.orderId === currentState.currentOrder.orderId);
     if (index !== -1) {
         currentState.orders[index] = currentState.currentOrder;
-        localStorage.setItem('orders', JSON.stringify(currentState.orders));
+        syncOrdersToFirebase();
     }
     
     alert('Order completed! Table is now available.');
@@ -1158,4 +1374,68 @@ function openImageModal(imageSrc, captionText) {
 function closeImageModal() {
     const modal = document.getElementById('imageModal');
     modal.style.display = 'none';
+}
+
+// ==================== DASHBOARD ====================
+function loadDashboard() {
+    // 1. Total Orders Received
+    const totalOrdersCount = currentState.orders.length;
+    document.getElementById('dashTotalOrders').textContent = totalOrdersCount;
+
+    // 2. Total Payment Amount
+    let totalPayment = 0;
+    currentState.orders.forEach(order => {
+        totalPayment += (order.totalPrice || 0);
+    });
+    document.getElementById('dashTotalPayment').textContent = `₹${totalPayment}`;
+
+    // 3. Tables Ready/Available
+    let availableTables = 0;
+    let totalTables = TABLES.length;
+    
+    // We assume tableStatuses holds all initialized tables
+    Object.values(currentState.tableStatuses).forEach(status => {
+        if (status.status === 'available') {
+            availableTables++;
+        }
+    });
+    
+    // If tableStatuses hasn't been initialized fully for all TABLES, count missing as available
+    const initializedTablesCount = Object.keys(currentState.tableStatuses).length;
+    if (initializedTablesCount < totalTables) {
+        availableTables += (totalTables - initializedTablesCount);
+    }
+    
+    document.getElementById('dashAvailableTables').textContent = `${availableTables} / ${totalTables}`;
+
+    // 4. Other important order/table details
+    // Render a brief list of recent orders or active tables
+    const recentOrdersList = document.getElementById('dashRecentOrdersList');
+    if (recentOrdersList) {
+        recentOrdersList.innerHTML = '';
+        if (currentState.orders.length === 0) {
+            recentOrdersList.innerHTML = '<div style="color: #666; padding: 10px;">No orders yet.</div>';
+        } else {
+            // Get last 5 orders
+            const recentOrders = [...currentState.orders].reverse().slice(0, 5);
+            recentOrders.forEach(order => {
+                const item = document.createElement('div');
+                item.style.padding = '10px';
+                item.style.borderBottom = '1px solid #eee';
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                
+                const tableText = `Table ${order.tableNumber}`;
+                const statusText = order.completed ? 'Completed' : (order.orderStatus || 'Pending').replace(/_/g, ' ');
+                const priceText = `₹${order.totalPrice}`;
+                
+                item.innerHTML = `
+                    <span style="font-weight: 600;">#${order.orderId} - ${tableText}</span>
+                    <span style="color: ${order.completed ? '#4CAF50' : '#ff5722'}; font-size: 0.9em; font-weight: 600; text-transform: uppercase;">${statusText}</span>
+                    <span style="font-weight: 600;">${priceText}</span>
+                `;
+                recentOrdersList.appendChild(item);
+            });
+        }
+    }
 }

@@ -1,17 +1,17 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Confirmation - Order Management System</title>
-    <link rel="stylesheet" href="styles.css?v=r5">
+    <link rel="stylesheet" href="styles.css?v=r6">
 </head>
 <body>
     <div class="container">
         <header class="header">
             <h1>Order Confirmation</h1>
             <div class="header-actions">
-                <button class="btn-back" onclick="goBackToFoodSelection()">← Back</button>
+                <button class="btn-back" onclick="goBackToFoodSelection()">? Back</button>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </header>
@@ -56,18 +56,18 @@
                 </div>
 
                 <div class="confirmation-total">
-                    <p>Grand Total: <strong>₹<span id="confirmTotal">0</span></strong></p>
+                    <p>Grand Total: <strong>?<span id="confirmTotal">0</span></strong></p>
                 </div>
 
                 <div class="confirmation-actions">
                     <button class="btn-secondary" onclick="goBackToFoodSelection()">Cancel</button>
-                    <button class="btn-primary" onclick="confirmOrder()">✓ Order Confirm</button>
+                    <button class="btn-primary" onclick="confirmOrder()">? Order Confirm</button>
                 </div>
             </div>
         </main>
     </div>
 
-    <script src="data.js?v=r5"></script>
-    <script src="script.js?v=r5"></script>
+    <script src="data.js?v=r6"></script>
+    <script src="script.js?v=r6"></script>
 </body>
 </html>
